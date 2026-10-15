@@ -29,7 +29,6 @@ export default function Welcome() {
   const all = listDisciplines();
   const counts = COVERAGE_ORDER.map((c) => ({ c, n: all.filter((d) => d.coverage === c).length })).filter((x) => x.n > 0);
   const coached = all.filter((d) => d.coverage === "full").map((d) => d.name.toUpperCase());
-  const showAccountLinks = cloudAvailable || __DEV__;
 
   return (
     <Screen maxWidth={wide ? 1120 : 520}>
@@ -83,30 +82,14 @@ export default function Welcome() {
           </View>
 
           <View style={styles.actions}>
-            {cloudAvailable ? (
-              <>
-                <Button label="Créer un compte" onPress={() => router.push("/inscription")} />
-                <Button kind="secondary" label="Continuer sans compte" hint="Tes données restent sur cet appareil" onPress={startLocal} />
-              </>
-            ) : (
-              <>
-                <Button label="Commencer sur cet appareil" hint="Tes données restent sur ce téléphone" onPress={startLocal} />
-                <Text variant="small" color={colors.muted}>
-                  Comptes en ligne bientôt disponibles. En attendant, tout reste sur cet appareil.
-                </Text>
-              </>
+            <Button label="Créer un compte" onPress={() => router.push("/inscription")} />
+            <Button kind="link" arrow label="J'ai déjà un compte" onPress={() => router.push("/connexion")} />
+            <Button kind="secondary" label="Continuer sans compte" hint="Tes données restent sur cet appareil" onPress={startLocal} />
+            {cloudAvailable ? null : (
+              <Text variant="small" color={colors.muted}>
+                Pour l'instant, ton compte et tes données sont enregistrés dans ce navigateur, sur cet appareil.
+              </Text>
             )}
-            {showAccountLinks ? (
-              <View style={styles.links}>
-                {cloudAvailable ? null : (
-                  <Text variant="monoSmall" color={colors.warning}>
-                    APERÇU DÉVELOPPEUR · SERVEUR NON CONFIGURÉ
-                  </Text>
-                )}
-                <Button kind="link" arrow label="J'ai déjà un compte" onPress={() => router.push("/connexion")} />
-                {cloudAvailable ? null : <Button kind="link" arrow label="Créer un compte" onPress={() => router.push("/inscription")} />}
-              </View>
-            ) : null}
           </View>
         </View>
       </View>
@@ -127,5 +110,4 @@ const styles = StyleSheet.create({
   grid: { flexDirection: "row", flexWrap: "wrap", gap: space.lg },
   cell: { flexBasis: "45%", flexGrow: 1, gap: 2, minWidth: 130 },
   actions: { gap: space.md },
-  links: { gap: space.xs, paddingTop: space.sm },
 });

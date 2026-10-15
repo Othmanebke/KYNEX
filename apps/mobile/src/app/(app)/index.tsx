@@ -21,18 +21,18 @@ export default function Home() {
           <Text variant="display" accessibilityRole="header">
             Tu es connecté
           </Text>
-          {user?.mode === "cloud" ? (
+          {user?.email ? (
             <View style={styles.block}>
               <Text variant="label" color={colors.muted}>
-                Compte en ligne
+                {user.mode === "cloud" ? "Compte en ligne" : "Compte sur cet appareil"}
               </Text>
               <Text variant="bodyStrong" style={styles.breakAnywhere}>
-                {user.email ?? "E-mail non renseigné"}
+                {user.email}
               </Text>
             </View>
           ) : (
             <Text variant="body" color={colors.muted}>
-              Mode local : tes données restent sur cet appareil.
+              Sans compte : tes données restent sur cet appareil.
             </Text>
           )}
           <Text variant="monoSmall" color={colors.faint} selectable style={styles.breakAnywhere}>

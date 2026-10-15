@@ -21,7 +21,7 @@ const COPY: Record<Mode, { title: string; submit: string; switchLabel: string; s
 };
 
 export function AuthForm({ mode }: { mode: Mode }) {
-  const { signIn, signUp, cloudAvailable, startLocal } = useAuth();
+  const { signIn, signUp, cloudAvailable } = useAuth();
   const copy = COPY[mode];
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -94,24 +94,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
         <Text variant="display" accessibilityRole="header">
           {copy.title}
         </Text>
-        {mode === "signUp" ? (
-          <Text variant="body" color={colors.muted}>
-            Ton compte sauvegarde ton profil et tes séances en ligne, pour les retrouver sur un autre appareil.
-          </Text>
-        ) : null}
+        <Text variant="body" color={colors.muted}>
+          {cloudAvailable
+            ? mode === "signUp"
+              ? "Ton compte sauvegarde ton profil et tes séances en ligne, pour les retrouver sur un autre appareil."
+              : "Retrouve ton profil et tes séances."
+            : "Compte enregistré dans ce navigateur, sur cet appareil uniquement. La synchronisation en ligne viendra plus tard."}
+        </Text>
       </View>
-
-      {!cloudAvailable ? (
-        <View style={styles.notice} accessibilityRole="alert">
-          <Text variant="bodyStrong" color={colors.warning}>
-            Compte en ligne indisponible
-          </Text>
-          <Text variant="small" color={colors.fg}>
-            Le serveur n'est pas encore configuré. Tu peux utiliser KYNEX sur cet appareil dès maintenant.
-          </Text>
-          <Button kind="link" arrow label="Commencer sur cet appareil" onPress={startLocal} />
-        </View>
-      ) : null}
 
       <View style={styles.form}>
         <TextField
@@ -189,7 +179,6 @@ function BackLink() {
 const styles = StyleSheet.create({
   head: { gap: space.md },
   form: { gap: space.lg },
-  notice: { backgroundColor: colors.warningBg, borderRadius: radius.md, padding: space.lg, gap: space.xs },
   formError: { backgroundColor: colors.dangerBg, borderRadius: radius.md, padding: space.md },
   back: { alignSelf: "flex-start", minWidth: 48 },
 });
