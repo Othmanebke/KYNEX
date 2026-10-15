@@ -1,7 +1,7 @@
 import "./local-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { TrainingProfileSchema, type TrainingProfile } from "@kynex/core";
-import { EMPTY_DRAFT, reviveDraft, type ProfileDraft } from "@/features/onboarding/draft";
+import { EMPTY_DRAFT, profileToDraft, reviveDraft, type ProfileDraft } from "@/features/onboarding/draft";
 
 /**
  * Profil d'entraînement de l'utilisateur connecté, stocké sur l'appareil.
@@ -44,8 +44,11 @@ export function ProfileProvider({ userId, children }: { userId: string; children
 
   useEffect(() => {
     const parsed = TrainingProfileSchema.safeParse(read(profileKey(userId)));
-    setProfile(parsed.success && parsed.data.userId === userId ? parsed.data : null);
-    setDraft(reviveDraft(read(draftKey(userId))));
+    const p = parsed.success && parsed.data.userId === userId ? parsed.data : null;
+    setProfile(p);
+    const storedDraft = read(draftKey(userId));
+    // Sans brouillon (ex. compte démo), on repart du profil enregistré pour pouvoir le modifier.
+    setDraft(storedDraft ? reviveDraft(storedDraft) : p ? profileToDraft(p) : EMPTY_DRAFT);
     setReady(true);
   }, [userId]);
 

@@ -14,6 +14,8 @@ import {
   type SessionResultInput,
   type WeeklySchedule,
   type XpEvent,
+  weekGoalMet,
+  weeklyStreak,
 } from "@kynex/core";
 
 /**
@@ -100,4 +102,12 @@ export function reviveJournal(raw: unknown, userId: string): Journal {
   const game = r.game && typeof r.game === "object" && Array.isArray((r.game as GamificationState).events) ? (r.game as GamificationState) : emptyState(userId);
   const records = Array.isArray(r.records) ? r.records : [];
   return { results, game, records };
+}
+
+/**
+ * Série de semaines régulières vue « aujourd'hui » : la semaine en cours, pas encore
+ * terminée, ne casse pas la série ; elle ne compte que si son objectif est déjà atteint.
+ */
+export function currentStreak(weeks: GamificationState["weeks"], currentWeekStart: string): number {
+  return weeklyStreak(weeks.filter((w) => w.weekStart !== currentWeekStart || weekGoalMet(w)));
 }

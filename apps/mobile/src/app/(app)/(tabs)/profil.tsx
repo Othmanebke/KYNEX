@@ -2,9 +2,10 @@ import { useEffect, useMemo } from "react";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { router } from "expo-router";
 import Animated, { cubicBezier } from "react-native-reanimated";
-import { allAchievements, getDiscipline, levelFromXp, totalXp, weeklyStreak, xpByDiscipline, type Achievement } from "@kynex/core";
+import { allAchievements, getDiscipline, levelFromXp, totalXp, xpByDiscipline, type Achievement } from "@kynex/core";
 import { useAuth } from "@/data/auth";
 import { useJournal } from "@/data/journal";
+import { currentStreak } from "@/data/journal-core";
 import { useProfile } from "@/data/profile";
 import { useWeek } from "@/data/week";
 import { allQuests, questRewards, type QuestProgress } from "@/features/profile/quests";
@@ -69,7 +70,7 @@ export default function Profil() {
 
   const xp = totalXp(game);
   const lvl = levelFromXp(xp);
-  const streak = weeklyStreak(game.weeks);
+  const streak = currentStreak(game.weeks, weekStart);
   const perDiscipline = xpByDiscipline(game);
   const earned = new Set(game.achievements);
   const achievements = allAchievements().filter((a) => !a.disciplineId || earned.has(a.id) || profile?.disciplines.some((d) => d.disciplineId === a.disciplineId));
@@ -217,14 +218,14 @@ export default function Profil() {
           Compte
         </Text>
         <Text variant="body" style={styles.breakAll}>
-          {state.status === "signedIn" ? (state.user.email ?? "Sans compte") : ""}
+          {state.status === "signedIn" ? (state.user.mode === "demo" ? "Mode démo : toutes les données affichées sont fictives." : (state.user.email ?? "Sans compte")) : ""}
         </Text>
         <Text variant="small" color={colors.muted}>
           {j.pendingSync
             ? `${j.pendingSync} enregistrement${j.pendingSync > 1 ? "s" : ""} gardé${j.pendingSync > 1 ? "s" : ""} sur cet appareil, en attente de synchronisation en ligne.`
             : "Tout est enregistré sur cet appareil."}
         </Text>
-        <Button kind="link" label="Se déconnecter" onPress={() => void signOut()} />
+        <Button kind="link" label={state.status === "signedIn" && state.user.mode === "demo" ? "Quitter la démo" : "Se déconnecter"} onPress={() => void signOut()} />
       </View>
     </View>
   );

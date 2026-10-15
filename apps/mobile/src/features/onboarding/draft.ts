@@ -167,3 +167,17 @@ export function reviveDraft(raw: unknown): ProfileDraft {
     painRegions: arr(r.painRegions),
   };
 }
+
+/** Brouillon reconstruit depuis un profil enregistré (pour le modifier). */
+export function profileToDraft(p: TrainingProfile): ProfileDraft {
+  return {
+    disciplines: p.disciplines.map((d) => ({ disciplineId: d.disciplineId, level: d.level, priority: d.priority, ...(d.sessionsPerWeek !== undefined ? { sessionsPerWeek: d.sessionsPerWeek } : {}) })),
+    goals: [...p.goals],
+    environments: [...p.environments],
+    equipment: p.equipment.filter((e): e is ProfileDraft["equipment"][number] => e !== "bodyweight" && !e.startsWith("custom:")),
+    availability: Object.fromEntries(p.availability.map((a) => [a.day, a.maxMinutes])),
+    preferredRestDays: [...p.preferredRestDays],
+    lowImpact: p.constraints.lowImpact,
+    painRegions: [...p.constraints.painRegions],
+  };
+}

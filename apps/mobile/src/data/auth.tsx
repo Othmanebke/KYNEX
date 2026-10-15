@@ -2,10 +2,11 @@ import "./local-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import * as Crypto from "expo-crypto";
 import { authErrorMessage } from "./auth-rules";
+import { buildDemo, DEMO_USER_ID } from "./demo";
 import { createLocalAccount, verifyLocalAccount, type LocalAccountDeps } from "./local-accounts";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
-export type AuthUser = { id: string; email?: string; mode: "cloud" | "local" };
+export type AuthUser = { id: string; email?: string; mode: "cloud" | "local" | "demo" };
 
 type AuthState =
   | { status: "loading" }
@@ -20,6 +21,8 @@ interface AuthApi {
   signIn(email: string, password: string): Promise<AuthResult>;
   signUp(email: string, password: string): Promise<AuthResult>;
   startLocal(): void;
+  /** Compte de démonstration : données fictives, étiquetées, effacées à la sortie. */
+  startDemo(): void;
   signOut(): Promise<void>;
 }
 
@@ -60,8 +63,34 @@ function writeLocalRecord(rec: LocalRecord): void {
   }
 }
 
+const DEMO_KEY = "kynex.demoSession";
+
+function demoActive(): boolean {
+  try {
+    return localStorage.getItem(DEMO_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** Efface toutes les données du compte démo (profil, journal, semaines, séance en cours, outbox). */
+function clearDemoData(): void {
+  try {
+    const doomed: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.endsWith(`.${DEMO_USER_ID}`) || k.includes(`.${DEMO_USER_ID}.`))) doomed.push(k);
+    }
+    for (const k of doomed) localStorage.removeItem(k);
+    localStorage.removeItem(DEMO_KEY);
+  } catch {
+    // rien à effacer
+  }
+}
+
 /** Utilisateur local dont la session est ouverte, sinon null. */
 function readLocalUser(): AuthUser | null {
+  if (demoActive()) return { id: DEMO_USER_ID, mode: "demo" };
   const rec = readLocalRecord();
   return rec?.active ? { id: rec.id, email: rec.email, mode: "local" } : null;
 }
@@ -148,7 +177,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     openLocalSession({ id });
   }, [openLocalSession]);
 
+  const startDemo = useCallback(() => {
+    clearDemoData();
+    const demo = buildDemo(new Date());
+    try {
+      localStorage.setItem(`kynex.profile.${DEMO_USER_ID}`, JSON.stringify(demo.profile));
+      localStorage.setItem(`kynex.journal.${DEMO_USER_ID}`, JSON.stringify(demo.journal));
+      localStorage.setItem(`kynex.planStart.${DEMO_USER_ID}`, JSON.stringify(demo.planStart));
+      localStorage.setItem(DEMO_KEY, "1");
+    } catch {
+      // Stockage bloqué : la démo ne peut pas être préparée.
+    }
+    setState({ status: "signedIn", user: { id: DEMO_USER_ID, mode: "demo" } });
+  }, []);
+
   const signOut = useCallback(async () => {
+    if (state.status === "signedIn" && state.user.mode === "demo") {
+      clearDemoData();
+      setState(() => {
+        const l = readLocalUser();
+        return l ? { status: "signedIn", user: l } : { status: "signedOut" };
+      });
+      return;
+    }
     if (state.status === "signedIn" && state.user.mode === "cloud" && supabase) {
       await supabase.auth.signOut();
       return;
@@ -160,8 +211,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const api = useMemo<AuthApi>(
-    () => ({ state, cloudAvailable: isSupabaseConfigured, signIn, signUp, startLocal, signOut }),
-    [state, signIn, signUp, startLocal, signOut],
+    () => ({ state, cloudAvailable: isSupabaseConfigured, signIn, signUp, startLocal, startDemo, signOut }),
+    [state, signIn, signUp, startLocal, startDemo, signOut],
   );
   return <AuthContext.Provider value={api}>{children}</AuthContext.Provider>;
 }

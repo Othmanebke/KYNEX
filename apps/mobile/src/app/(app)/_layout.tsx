@@ -4,6 +4,7 @@ import { useAuth } from "@/data/auth";
 import { ProfileProvider, useProfile } from "@/data/profile";
 import { JournalProvider } from "@/data/journal";
 import { WeekProvider } from "@/data/week";
+import { DemoBadge } from "@/ui/DemoBadge";
 import { colors } from "@/ui/tokens";
 
 function AppStack({ userId }: { userId: string }) {
@@ -38,6 +39,7 @@ export default function AppLayout() {
   return (
     <ProfileProvider key={state.user.id} userId={state.user.id}>
       <AppStack userId={state.user.id} />
+      <DemoBadge />
     </ProfileProvider>
   );
 }
