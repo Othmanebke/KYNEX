@@ -10,8 +10,9 @@
   "scripts": {
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "web": "npm run web -w @kynex/mobile",
+    "mobile": "npm run start -w @kynex/mobile",
     "db:migrate": "npm run db:migrate -w @kynex/core",
-    "db:seed:export": "npm run db:seed:export -w @kynex/core",
-    "mobile": "npm run start -w @kynex/mobile"
+    "db:seed:export": "npm run db:seed:export -w @kynex/core"
   }
 }

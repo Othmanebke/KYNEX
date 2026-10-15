@@ -5,7 +5,8 @@ iPhone, Android, tablette et web (PC) depuis le même code. Utilise le socle `@k
 ```bash
 # depuis la racine du dépôt
 npm install
-npm run mobile            # puis scanne le QR code avec Expo Go
+npm run web               # ouvre l'app dans le navigateur (http://localhost:8081)
+npm run mobile            # iPhone / Android via Expo Go (plus tard)
 npm run typecheck
 npm test                  # tests du socle + de l'app
 ```
