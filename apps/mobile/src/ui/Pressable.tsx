@@ -9,6 +9,8 @@ export interface PressScaleProps extends Omit<PressableProps, "style"> {
   style?: StyleProp<ViewStyle>;
   /** Échelle au toucher ; 0.97 par défaut. */
   pressedScale?: number;
+  /** Style de la zone tactile extérieure (ex. flex: 1 dans une rangée). */
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -16,7 +18,7 @@ export interface PressScaleProps extends Omit<PressableProps, "style"> {
  * Transition CSS Reanimated : tourne sur le thread UI, aucun worklet nécessaire.
  * Réduction des animations : on garde une baisse d'opacité, sans échelle.
  */
-export function PressScale({ style, pressedScale = 0.97, children, onPressIn, onPressOut, disabled, ...rest }: PressScaleProps) {
+export function PressScale({ style, containerStyle, pressedScale = 0.97, children, onPressIn, onPressOut, disabled, ...rest }: PressScaleProps) {
   const [pressed, setPressed] = useState(false);
   const reduced = useReducedMotion();
   const active = pressed && !disabled;
@@ -34,7 +36,7 @@ export function PressScale({ style, pressedScale = 0.97, children, onPressIn, on
         setPressed(false);
         onPressOut?.(e);
       }}
-      style={{ minHeight: HIT, justifyContent: "center" }}
+      style={[{ minHeight: HIT, justifyContent: "center" }, containerStyle]}
     >
       {(state) => (
         <Animated.View

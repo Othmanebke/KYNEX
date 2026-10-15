@@ -4,7 +4,7 @@ import { PressScale } from "./Pressable";
 import { Text } from "./Text";
 import { colors, HIT, radius, space } from "./tokens";
 
-type Kind = "primary" | "secondary" | "link";
+type Kind = "primary" | "secondary" | "danger" | "link";
 
 export interface ButtonProps {
   label: string;
@@ -21,11 +21,12 @@ export interface ButtonProps {
 /**
  * primary   : fond vert-jaune, une seule par écran.
  * secondary : contour, actions alternatives.
+ * danger    : contour rouge, action destructrice (toujours annulable ailleurs).
  * link      : texte souligné vert-jaune + flèche — le CTA de la maquette.
  */
 export function Button({ label, onPress, kind = "primary", loading, disabled, hint, arrow }: ButtonProps) {
   const inactive = disabled || loading;
-  const fg = kind === "primary" ? colors.onAccent : kind === "link" ? colors.accent : colors.fg;
+  const fg = kind === "primary" ? colors.onAccent : kind === "link" ? colors.accent : kind === "danger" ? colors.danger : colors.fg;
   return (
     <PressScale
       accessibilityRole="button"
@@ -37,7 +38,7 @@ export function Button({ label, onPress, kind = "primary", loading, disabled, hi
         if (kind === "primary") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
       }}
-      style={[styles.base, kind === "primary" && styles.primary, kind === "secondary" && styles.secondary, kind === "link" && styles.link]}
+      style={[styles.base, kind === "primary" && styles.primary, kind === "secondary" && styles.secondary, kind === "danger" && styles.danger, kind === "link" && styles.link]}
     >
       {loading ? (
         <ActivityIndicator color={fg} accessibilityLabel="Chargement" />
@@ -66,6 +67,7 @@ const styles = StyleSheet.create({
   base: { minHeight: HIT + 4, borderRadius: radius.md, alignItems: "center", justifyContent: "center", paddingHorizontal: space.xl },
   primary: { backgroundColor: colors.accent },
   secondary: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
+  danger: { borderWidth: 1, borderColor: colors.danger, backgroundColor: colors.dangerBg },
   link: { minHeight: HIT, paddingHorizontal: 0, alignItems: "flex-start", borderRadius: 0 },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
   center: { textAlign: "center" },
