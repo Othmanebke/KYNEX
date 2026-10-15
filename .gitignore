@@ -6,3 +6,7 @@ coverage
 .agents/
 .claude/
 skills-lock.json
+.codex/
+
+# Impeccable : réglages propres à chaque développeur
+**/.impeccable/config.local.json
