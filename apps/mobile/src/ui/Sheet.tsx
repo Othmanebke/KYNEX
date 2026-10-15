@@ -4,6 +4,7 @@ import Animated, { Easing, FadeIn, SlideInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "./Text";
 import { colors, radius, space } from "./tokens";
+import { Icon } from "./Icon";
 
 const EASE_SHEET = Easing.bezier(0.32, 0.72, 0, 1);
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
@@ -34,9 +35,7 @@ export function Sheet({ visible, onClose, title, children }: { visible: boolean;
               {title}
             </Text>
             <Pressable accessibilityRole="button" accessibilityLabel="Fermer" onPress={onClose} hitSlop={8} style={styles.close}>
-              <Text variant="headline" color={colors.muted}>
-                ✕
-              </Text>
+              <Icon name="x" size={22} color={colors.muted} />
             </Pressable>
           </View>
           <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">

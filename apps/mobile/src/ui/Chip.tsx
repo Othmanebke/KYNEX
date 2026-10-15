@@ -5,6 +5,7 @@ import * as Haptics from "expo-haptics";
 import { PressScale } from "./Pressable";
 import { Text } from "./Text";
 import { colors, radius, space } from "./tokens";
+import { Icon } from "./Icon";
 
 const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
 
@@ -55,9 +56,7 @@ export function Chip({ label, selected, onToggle, detail, dot, role = "checkbox"
       >
         <View style={[styles.box, selected && styles.boxOn, role === "radio" && styles.radio]}>
           {selected ? (
-            <Text variant="label" color={colors.onAccent} style={styles.tick} accessible={false}>
-              ✓
-            </Text>
+            <Icon name="check" size={15} color={colors.onAccent} />
           ) : null}
         </View>
         <View style={styles.text}>

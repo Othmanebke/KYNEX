@@ -14,6 +14,7 @@ function AppStack({ userId }: { userId: string }) {
       {/* Sans profil, seule la création est accessible : l'app y redirige automatiquement. */}
       <Stack.Protected guard={profile !== null}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="seance/[id]" />
       </Stack.Protected>
       <Stack.Screen name="creation-profil" />
     </Stack>

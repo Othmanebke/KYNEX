@@ -87,3 +87,26 @@ export function formatMinutes(min: number): string {
   const m = min % 60;
   return m ? `${h} h ${String(m).padStart(2, "0")}` : `${h} h`;
 }
+
+export const MUSCLE_LABEL: Record<import("@kynex/core").MuscleGroup, string> = {
+  chest: "Pectoraux",
+  back: "Dos",
+  shoulders: "Épaules",
+  biceps: "Biceps",
+  triceps: "Triceps",
+  forearms: "Avant-bras",
+  core: "Sangle abdominale",
+  glutes: "Fessiers",
+  quads: "Quadriceps",
+  hamstrings: "Ischio-jambiers",
+  calves: "Mollets",
+  hips: "Hanches",
+  full_body: "Corps entier",
+};
+
+/** Libellé d'un équipement du socle, y compris le poids du corps et les équipements « custom: ». */
+export function equipmentLabel(e: string): string {
+  if (e === "bodyweight") return "Poids du corps";
+  if (e.startsWith("custom:")) return e.slice(7).replace(/_/g, " ");
+  return (EQUIPMENT_LABEL as Record<string, string>)[e] ?? e;
+}

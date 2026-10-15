@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { PressScale } from "./Pressable";
 import { Text } from "./Text";
 import { colors, HIT, radius, space } from "./tokens";
+import { Icon } from "./Icon";
 
 type Kind = "primary" | "secondary" | "danger" | "link";
 
@@ -14,7 +15,7 @@ export interface ButtonProps {
   disabled?: boolean;
   /** Indication pour lecteur d'écran, si le libellé ne suffit pas. */
   hint?: string;
-  /** Flèche ↗ à droite (CTA de la maquette). */
+  /** Flèche en diagonale à droite (CTA de la maquette). */
   arrow?: boolean;
 }
 
@@ -48,13 +49,23 @@ export function Button({ label, onPress, kind = "primary", loading, disabled, hi
           // et la flèche reste collée au dernier mot.
           <Text variant="label" color={fg} style={styles.linkText}>
             {label}
-            {arrow ? "  ↗" : ""}
+            {arrow ? (
+              <>
+                {"  "}
+                <Icon name="arrow-up-right" size={15} color={fg} />
+              </>
+            ) : null}
           </Text>
         ) : (
           <View style={styles.row}>
             <Text variant="bodyStrong" color={fg} style={styles.center}>
               {label}
-              {arrow ? "  ↗" : ""}
+              {arrow ? (
+              <>
+                {"  "}
+                <Icon name="arrow-up-right" size={15} color={fg} />
+              </>
+            ) : null}
             </Text>
           </View>
         )

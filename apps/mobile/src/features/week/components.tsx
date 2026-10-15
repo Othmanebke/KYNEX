@@ -8,6 +8,7 @@ import { PressScale } from "@/ui/Pressable";
 import { Text } from "@/ui/Text";
 import { colors, disciplineColors, radius, space } from "@/ui/tokens";
 import { conflictsOf, frenchDays, INTENSITY_LABEL, suggestionLabel, type WeekGauges } from "./week";
+import { Icon } from "@/ui/Icon";
 
 const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
 export const familyColor = (disciplineId: string): string => disciplineColors[getDiscipline(disciplineId).family] ?? colors.muted;
@@ -82,38 +83,56 @@ export function DayStrip({ days, today, dates, onPick, restDays }: { days: DayPl
 }
 
 /* ───────── Carte de séance ───────── */
-export function SessionCard({ s, conflicts, onPress }: { s: ScheduledSession; conflicts: Conflict[]; onPress: () => void }) {
+export function SessionCard({ s, conflicts, onPress, onOptions }: { s: ScheduledSession; conflicts: Conflict[]; onPress: () => void; onOptions: () => void }) {
   const d = getDiscipline(s.disciplineId);
   const mine = conflictsOf(conflicts, s.id);
   const worst = mine.some((c) => c.severity === "error") ? "error" : mine.length ? "warning" : null;
   const color = familyColor(s.disciplineId);
+  // Deux zones sœurs (jamais un bouton dans un bouton) : le corps ouvre le détail, « ⋯ » ouvre les actions.
   return (
-    <PressScale
-      accessibilityRole="button"
-      accessibilityLabel={`${s.plan.title}, ${d.name}, ${formatMinutes(s.plan.estimatedMinutes)}, intensité ${INTENSITY_LABEL[s.plan.intensity].toLowerCase()}${worst ? `, ${mine.length} conflit${mine.length > 1 ? "s" : ""}` : ""}`}
-      accessibilityHint="Ouvre les actions : déplacer, alléger, supprimer"
-      onPress={onPress}
-    >
-      <View style={[styles.card, worst === "error" && styles.cardError, worst === "warning" && styles.cardWarn]}>
-        <View style={[styles.stripe, { backgroundColor: color }]} />
-        <View style={styles.cardBody}>
-          <Text variant="bodyStrong">{s.plan.title}</Text>
-          <View style={styles.meta}>
-            <Text variant="monoSmall" color={colors.muted}>
-              {formatMinutes(s.plan.estimatedMinutes).toUpperCase()} · {INTENSITY_LABEL[s.plan.intensity].toUpperCase()}
-            </Text>
-            {s.addOn ? <Tag label="Complément" color={colors.muted} /> : null}
-            {d.coverage === "beta" ? <Tag label={COVERAGE.beta.label} color={COVERAGE.beta.color} /> : null}
-            {s.substitution ? <Tag label="Remplacée" color={colors.warning} /> : null}
-          </View>
-          {worst ? (
-            <Text variant="small" color={worst === "error" ? colors.danger : colors.warning}>
-              {worst === "error" ? "▲ À corriger" : "● À surveiller"} · {mine.length} conflit{mine.length > 1 ? "s" : ""}
-            </Text>
-          ) : null}
+    <View style={[styles.card, worst === "error" && styles.cardError, worst === "warning" && styles.cardWarn]}>
+      <PressScale
+        accessibilityRole="button"
+        accessibilityLabel={`${s.plan.title}, ${d.name}, ${formatMinutes(s.plan.estimatedMinutes)}, intensité ${INTENSITY_LABEL[s.plan.intensity].toLowerCase()}${worst ? `, ${mine.length} conflit${mine.length > 1 ? "s" : ""}` : ""}`}
+        accessibilityHint="Ouvre le détail de la séance"
+        onPress={onPress}
+        onLongPress={onOptions}
+        containerStyle={styles.flex}
+        style={styles.cardBody}
+      >
+        <View style={styles.titleRow}>
+          <View style={[styles.cardDot, { backgroundColor: color }]} />
+          <Text variant="bodyStrong" style={styles.flex}>
+            {s.plan.title}
+          </Text>
         </View>
-      </View>
-    </PressScale>
+        <View style={styles.meta}>
+          <Text variant="monoSmall" color={colors.muted}>
+            {formatMinutes(s.plan.estimatedMinutes).toUpperCase()} · {INTENSITY_LABEL[s.plan.intensity].toUpperCase()}
+          </Text>
+          {s.addOn ? <Tag label="Complément" color={colors.muted} /> : null}
+          {d.coverage === "beta" ? <Tag label={COVERAGE.beta.label} color={COVERAGE.beta.color} /> : null}
+          {s.substitution ? <Tag label="Remplacée" color={colors.warning} /> : null}
+        </View>
+        {worst ? (
+          <View style={styles.inlineIcon}>
+            <Icon name={worst === "error" ? "alert-triangle" : "alert-circle"} size={14} color={worst === "error" ? colors.danger : colors.warning} />
+            <Text variant="small" color={worst === "error" ? colors.danger : colors.warning}>
+              {worst === "error" ? "À corriger" : "À surveiller"} · {mine.length} conflit{mine.length > 1 ? "s" : ""}
+            </Text>
+          </View>
+        ) : null}
+      </PressScale>
+      <PressScale
+        accessibilityRole="button"
+        accessibilityLabel={`Options : ${s.plan.title}`}
+        accessibilityHint="Déplacer, alléger ou supprimer"
+        onPress={onOptions}
+        style={styles.opt}
+      >
+        <Icon name="more-horizontal" size={18} color={colors.muted} />
+      </PressScale>
+    </View>
   );
 }
 
@@ -134,9 +153,11 @@ export function DayBlock({
   isToday,
   conflicts,
   onSession,
+  onOptions,
   compact,
   restPreferred,
 }: {
+  onOptions: (s: ScheduledSession) => void;
   restPreferred: boolean;
   d: DayPlan;
   date: Date;
@@ -162,7 +183,7 @@ export function DayBlock({
       {d.sessions.length ? (
         <View style={styles.sessions}>
           {d.sessions.map((s) => (
-            <SessionCard key={s.id} s={s} conflicts={conflicts} onPress={() => onSession(s)} />
+            <SessionCard key={s.id} s={s} conflicts={conflicts} onPress={() => onSession(s)} onOptions={() => onOptions(s)} />
           ))}
         </View>
       ) : (
@@ -181,9 +202,12 @@ export function ConflictCard({ c, schedule, onApply, index }: { c: Conflict; sch
   const error = c.severity === "error";
   return (
     <Animated.View entering={FadeInDown.duration(220).delay(index * 40).easing(Easing.bezier(0.23, 1, 0.32, 1))} style={[styles.conflict, error ? styles.conflictError : styles.conflictWarn]}>
-      <Text variant="label" color={error ? colors.danger : colors.warning}>
-        {error ? "▲ À corriger" : "● À surveiller"}
-      </Text>
+      <View style={styles.inlineIcon}>
+        <Icon name={error ? "alert-triangle" : "alert-circle"} size={16} color={error ? colors.danger : colors.warning} />
+        <Text variant="label" color={error ? colors.danger : colors.warning}>
+          {error ? "À corriger" : "À surveiller"}
+        </Text>
+      </View>
       <Text variant="body">{frenchDays(c.message)}</Text>
       {c.suggestions.length ? (
         <View style={styles.sugs}>
@@ -212,9 +236,7 @@ export function UndoBar({ label, canUndo, onUndo, onDismiss }: { label: string; 
       </Text>
       {canUndo ? <Button kind="link" label="Annuler" onPress={onUndo} /> : null}
       <PressScale accessibilityRole="button" accessibilityLabel="Masquer" onPress={onDismiss} style={styles.undoClose}>
-        <Text variant="bodyStrong" color={colors.muted}>
-          ✕
-        </Text>
+        <Icon name="x" size={18} color={colors.muted} />
       </PressScale>
     </Animated.View>
   );
@@ -222,6 +244,7 @@ export function UndoBar({ label, canUndo, onUndo, onDismiss }: { label: string; 
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
+  inlineIcon: { flexDirection: "row", alignItems: "center", gap: space.xs },
   gauges: { flexDirection: "row", borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, overflow: "hidden" },
   gauge: { flex: 1, minWidth: 0, padding: space.md, gap: 4, borderRightWidth: 1, borderRightColor: colors.line },
   bar: { height: 4, borderRadius: 2, backgroundColor: colors.line, overflow: "hidden", marginTop: 2 },
@@ -236,7 +259,9 @@ const styles = StyleSheet.create({
   card: { flexDirection: "row", backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, overflow: "hidden", minHeight: 56 },
   cardError: { borderColor: colors.danger },
   cardWarn: { borderColor: colors.warning },
-  stripe: { width: 4 },
+  titleRow: { flexDirection: "row", alignItems: "baseline", gap: space.sm },
+  opt: { width: 44, minHeight: 48, alignItems: "center", justifyContent: "flex-start", paddingTop: space.md },
+  cardDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0, transform: [{ translateY: -1 }] },
   cardBody: { flex: 1, minWidth: 0, padding: space.md, gap: 4 },
   meta: { flexDirection: "row", alignItems: "center", gap: space.sm, flexWrap: "wrap" },
   tag: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 7, paddingVertical: 1 },

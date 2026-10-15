@@ -12,6 +12,7 @@ import { Screen } from "@/ui/Screen";
 import { Text } from "@/ui/Text";
 import { TextField } from "@/ui/TextField";
 import { colors, radius, space } from "@/ui/tokens";
+import { Icon } from "@/ui/Icon";
 
 type Mode = "signIn" | "signUp";
 
@@ -169,9 +170,12 @@ function BackLink() {
       onPress={() => (router.canGoBack() ? router.back() : router.replace("/bienvenue"))}
       style={styles.back}
     >
-      <Text variant="bodyStrong" color={colors.muted}>
-        ← Retour
-      </Text>
+      <View style={styles.backRow}>
+        <Icon name="arrow-left" size={18} color={colors.muted} />
+        <Text variant="bodyStrong" color={colors.muted}>
+          Retour
+        </Text>
+      </View>
     </PressScale>
   );
 }
@@ -181,4 +185,5 @@ const styles = StyleSheet.create({
   form: { gap: space.lg },
   formError: { backgroundColor: colors.dangerBg, borderRadius: radius.md, padding: space.md },
   back: { alignSelf: "flex-start", minWidth: 48 },
+  backRow: { flexDirection: "row", alignItems: "center", gap: space.xs },
 });

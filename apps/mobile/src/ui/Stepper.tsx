@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { PressScale } from "./Pressable";
 import { Text } from "./Text";
 import { colors, HIT, radius } from "./tokens";
+import { Icon } from "./Icon";
 
 export interface StepperProps {
   /** Nom pour les lecteurs d'écran (ex. « Durée le lundi »). */
@@ -32,13 +33,13 @@ export function Stepper({ label, display, onDecrement, onIncrement }: StepperPro
       onAccessibilityAction={(e) => (e.nativeEvent.actionName === "increment" ? tap(onIncrement)() : tap(onDecrement)())}
     >
       <PressScale accessibilityElementsHidden importantForAccessibility="no" disabled={!onDecrement} onPress={tap(onDecrement)} style={styles.btn}>
-        <Text variant="headline">−</Text>
+        <Icon name="minus" size={18} />
       </PressScale>
       <Text variant="mono" style={styles.value} numberOfLines={1}>
         {display}
       </Text>
       <PressScale accessibilityElementsHidden importantForAccessibility="no" disabled={!onIncrement} onPress={tap(onIncrement)} style={styles.btn}>
-        <Text variant="headline">+</Text>
+        <Icon name="plus" size={18} />
       </PressScale>
     </View>
   );

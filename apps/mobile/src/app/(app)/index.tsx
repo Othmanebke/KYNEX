@@ -15,6 +15,7 @@ import { Screen } from "@/ui/Screen";
 import { Sheet } from "@/ui/Sheet";
 import { Text } from "@/ui/Text";
 import { colors, radius, space } from "@/ui/tokens";
+import { Icon } from "@/ui/Icon";
 
 export default function Semaine() {
   const { state, signOut } = useAuth();
@@ -63,7 +64,7 @@ export default function Semaine() {
             dayY.current[d.day] = e.nativeEvent.layout.y;
           }}
         >
-          <DayBlock d={d} restPreferred={restDays.includes(d.day)} date={dates[d.day]} isToday={d.day === today} conflicts={schedule.conflicts} onSession={(s) => setOpenId(s.id)} compact={columns} />
+          <DayBlock d={d} restPreferred={restDays.includes(d.day)} date={dates[d.day]} isToday={d.day === today} conflicts={schedule.conflicts} onSession={(s) => router.push({ pathname: "/seance/[id]", params: { id: s.id } })} onOptions={(s) => setOpenId(s.id)} compact={columns} />
         </View>
       ))}
     </View>
@@ -79,18 +80,16 @@ export default function Semaine() {
             <Text variant="small" color={colors.muted} numberOfLines={1} ellipsizeMode="middle" style={styles.accountTxt}>
               {width < 420 ? "Compte" : state.status === "signedIn" ? (state.user.email ?? "Sans compte") : ""}
             </Text>
-            <Text variant="bodyStrong" style={styles.noShrink}>
-              ☰
-            </Text>
+            <Icon name="menu" size={22} />
           </PressScale>
         </View>
 
         <View style={styles.hero}>
-          <Text variant="monoSmall" color={colors.muted}>
-            {weekRangeLabel(monday).toUpperCase()}
-          </Text>
           <Text variant="display" accessibilityRole="header">
             Semaine {week.weekIndex + 1}
+          </Text>
+          <Text variant="mono" color={colors.fg}>
+            {weekRangeLabel(monday)}
           </Text>
           <Text variant="body" color={colors.muted}>
             {gauges.sessions} séance{gauges.sessions > 1 ? "s" : ""} ·{" "}
@@ -165,6 +164,8 @@ export default function Semaine() {
         ) : null}
 
         {days}
+        {/* Place sous la dernière séance quand la barre « Annuler » est affichée : rien ne reste caché dessous. */}
+        {week.lastAction ? <View style={styles.undoSpace} /> : null}
       </Screen>
 
       {week.lastAction ? (
@@ -232,4 +233,5 @@ const styles = StyleSheet.create({
   col: { flex: 1, minWidth: 0 },
   undoWrap: { position: "absolute", left: 0, right: 0, bottom: __DEV__ ? 56 : 16, alignItems: "center", paddingHorizontal: space.lg },
   undoInner: { width: "100%", maxWidth: 560 },
+  undoSpace: { height: 72 },
 });
