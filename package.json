@@ -1,25 +1,17 @@
 {
-  "name": "kynex-core",
+  "name": "kynex",
   "version": "0.1.0",
   "private": true,
-  "description": "KYNEX — socle multisports : catalogue, modèle de séance par blocs, générateurs, planification hebdomadaire, suivi et gamification.",
-  "type": "module",
+  "description": "KYNEX — application d'entraînement multisports (monorepo).",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "db:seed:export": "tsx scripts/export-seed.ts",
-    "db:migrate": "tsx scripts/migrate.ts"
-  },
-  "dependencies": {
-    "postgres": "^3.4.9",
-    "zod": "^4.6.7"
-  },
-  "devDependencies": {
-    "@electric-sql/pglite": "^0.5.10",
-    "@types/node": "^26.6.5",
-    "tsx": "^4.23.15",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.7"
+    "test": "npm run test -w @kynex/core",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:migrate": "npm run db:migrate -w @kynex/core",
+    "db:seed:export": "npm run db:seed:export -w @kynex/core",
+    "mobile": "npm run start -w @kynex/mobile"
   }
 }
