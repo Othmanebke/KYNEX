@@ -2,7 +2,6 @@ import { useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { router } from "expo-router";
 import { getDiscipline, getGenerator, listDisciplines, WEEKDAYS, type ScheduledSession, type Weekday } from "@kynex/core";
-import { useAuth } from "@/data/auth";
 import { useProfile } from "@/data/profile";
 import { useJournal } from "@/data/journal";
 import { completedPlanned } from "@/data/journal-core";
@@ -13,21 +12,16 @@ import { SessionSheet } from "@/features/week/SessionSheet";
 import { dateOfDay, findSession, isoDate, mondayOf, readableNotes, sortConflicts, todayWeekday, weekGauges, weekRangeLabel } from "@/features/week/week";
 import { Button } from "@/ui/Button";
 import { COVERAGE } from "@/ui/coverage";
-import { PressScale } from "@/ui/Pressable";
 import { Screen } from "@/ui/Screen";
-import { Sheet } from "@/ui/Sheet";
 import { Text } from "@/ui/Text";
 import { colors, radius, space } from "@/ui/tokens";
-import { Icon } from "@/ui/Icon";
 
 export default function Semaine() {
-  const { state, signOut } = useAuth();
   const { profile } = useProfile();
   const week = useWeek();
   const { width } = useWindowDimensions();
   const columns = width >= 1100;
   const [openId, setOpenId] = useState<string | null>(null);
-  const [account, setAccount] = useState(false);
   const [allNotes, setAllNotes] = useState(false);
   const [wellness, setWellness] = useState(false);
   const j = useJournal();
@@ -81,13 +75,9 @@ export default function Semaine() {
       <Screen maxWidth={columns ? 1320 : 640} scrollRef={scrollRef}>
         <View style={styles.top}>
           <Text variant="title">KYNEX</Text>
-          <PressScale accessibilityRole="button" accessibilityLabel="Compte et profil" onPress={() => setAccount(true)} containerStyle={styles.accountSlot} style={styles.accountBtn}>
-            {/* Écran étroit : « Compte » seul, pour que le menu reste toujours atteignable. */}
-            <Text variant="small" color={colors.muted} numberOfLines={1} ellipsizeMode="middle" style={styles.accountTxt}>
-              {width < 420 ? "Compte" : state.status === "signedIn" ? (state.user.email ?? "Sans compte") : ""}
-            </Text>
-            <Icon name="menu" size={22} />
-          </PressScale>
+          <Text variant="small" color={colors.muted} numberOfLines={1} style={styles.accountTxt}>
+            {j.pendingSync ? `${j.pendingSync} en attente de synchro` : "Enregistré sur cet appareil"}
+          </Text>
         </View>
 
         <View style={styles.hero}>
@@ -206,29 +196,6 @@ export default function Semaine() {
         onApply={(signal) => week.applyWellness(signal)}
       />
 
-      <Sheet visible={account} onClose={() => setAccount(false)} title="Compte">
-        <Text variant="small" color={colors.muted}>
-          {state.status === "signedIn" ? (state.user.email ? `Connecté : ${state.user.email}` : "Sans compte : données sur cet appareil.") : ""}
-        </Text>
-        <Button
-          kind="secondary"
-          label="Modifier mon profil"
-          onPress={() => {
-            setAccount(false);
-            router.push("/creation-profil");
-          }}
-        />
-        <Button
-          kind="secondary"
-          label="Recalculer la semaine"
-          hint="Annule tes déplacements et suppressions de cette semaine"
-          onPress={() => {
-            setAccount(false);
-            week.reset();
-          }}
-        />
-        <Button kind="link" label="Se déconnecter" onPress={() => void signOut()} />
-      </Sheet>
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from "react-native";
+import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useKeepAwake } from "expo-keep-awake";
 import * as Haptics from "expo-haptics";
@@ -18,73 +18,12 @@ import { Icon } from "@/ui/Icon";
 import { formatMinutes } from "@/ui/labels";
 import { PressScale } from "@/ui/Pressable";
 import { Sheet } from "@/ui/Sheet";
+import { NumberField } from "@/ui/NumberField";
+import { RpePicker } from "@/ui/RpePicker";
 import { Text } from "@/ui/Text";
 import { colors, fonts, HIT, radius, space } from "@/ui/tokens";
 
 const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
-
-/** Échelle RPE 1–10 en pastilles (cibles de 44 pt). */
-function RpePicker({ value, onChange, target }: { value?: number; onChange: (v: number | undefined) => void; target?: number }) {
-  return (
-    <View style={styles.rpe} accessibilityRole="radiogroup" accessibilityLabel="Effort perçu (RPE)">
-      {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
-        const on = value === n;
-        return (
-          <PressScale
-            key={n}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: on }}
-            accessibilityLabel={`RPE ${n}${n === target ? ", cible" : ""}`}
-            onPress={() => {
-              void Haptics.selectionAsync();
-              onChange(on ? undefined : n);
-            }}
-            containerStyle={styles.rpeSlot}
-            style={[styles.rpeCell, n === target && styles.rpeTarget, on && styles.rpeOn]}
-          >
-            <Text variant="mono" color={on ? colors.onAccent : colors.fg}>
-              {n}
-            </Text>
-          </PressScale>
-        );
-      })}
-    </View>
-  );
-}
-
-/** Champ numérique : vide = non saisi (jamais 0 par défaut). */
-function NumberField({ label, unit, value, onChange, decimal }: { label: string; unit: string; value?: number; onChange: (v: number | undefined) => void; decimal?: boolean }) {
-  const [text, setText] = useState(value === undefined ? "" : String(value));
-  return (
-    <View style={styles.field}>
-      <Text variant="label" color={colors.muted}>
-        {label}
-      </Text>
-      <View style={styles.fieldBox}>
-        <TextInput
-          value={text}
-          onChangeText={(t) => {
-            const clean = t.replace(",", ".").replace(decimal ? /[^0-9.]/g : /[^0-9]/g, "");
-            setText(clean);
-            const n = Number(clean);
-            onChange(clean === "" || !Number.isFinite(n) ? undefined : n);
-          }}
-          keyboardType={decimal ? "decimal-pad" : "number-pad"}
-          inputMode={decimal ? "decimal" : "numeric"}
-          placeholder="non saisi"
-          placeholderTextColor={colors.faint}
-          accessibilityLabel={`${label} en ${unit}`}
-          selectionColor={colors.accent}
-          style={styles.fieldInput}
-          maxLength={6}
-        />
-        <Text variant="mono" color={colors.muted}>
-          {unit}
-        </Text>
-      </View>
-    </View>
-  );
-}
 
 function RunningStep({ state, now, onComplete, onSkip, onExercise }: { state: LiveState; now: number; onComplete: (a: StepActual) => void; onSkip: () => void; onExercise: (id: string) => void }) {
   const step = state.steps[state.current]!;
@@ -500,14 +439,6 @@ const styles = StyleSheet.create({
   timerFill: { position: "absolute", left: 0, top: 0, bottom: 0, backgroundColor: colors.accent },
   inputs: { gap: space.md },
   row: { flexDirection: "row", gap: space.md, flexWrap: "wrap" },
-  field: { flex: 1, minWidth: 130, gap: space.xs },
-  fieldBox: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, backgroundColor: colors.surface, paddingHorizontal: space.md, minHeight: 56 },
-  fieldInput: { flex: 1, minWidth: 0, color: colors.fg, fontFamily: fonts.monoMedium, fontSize: 24, paddingVertical: space.sm },
-  rpe: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  rpeSlot: { flexBasis: "18%", flexGrow: 1 },
-  rpeCell: { minHeight: 48, borderRadius: radius.sm + 2, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" },
-  rpeTarget: { borderColor: colors.accent },
-  rpeOn: { backgroundColor: colors.accent, borderColor: colors.accent },
   actions: { gap: space.sm, marginTop: space.sm },
   next: { gap: 2, paddingTop: space.md, borderTopWidth: 1, borderTopColor: colors.line },
   paused: { gap: space.md, backgroundColor: colors.surface, borderRadius: radius.md, padding: space.lg, borderWidth: 1, borderColor: colors.line },

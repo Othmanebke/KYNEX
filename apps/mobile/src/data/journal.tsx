@@ -2,7 +2,7 @@ import "./local-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Platform } from "react-native";
 import * as Crypto from "expo-crypto";
-import { createLiveState, Outbox, reduceLive, type KeyValueStore, type LiveAction, type LiveState, type ScheduledSession, type SessionResultInput } from "@kynex/core";
+import { addEvents, createLiveState, Outbox, reduceLive, type KeyValueStore, type XpEvent, type LiveAction, type LiveState, type ScheduledSession, type SessionResultInput } from "@kynex/core";
 import { isoDate } from "@/features/week/week";
 import { emptyJournal, reviveJournal, saveLiveSession, saveManualSession, saveRestCheckIn, type Journal, type SaveOutcome } from "./journal-core";
 import { useWeek } from "./week";
@@ -56,6 +56,8 @@ export interface JournalApi {
   finishLive(input: { perceivedEffort?: number; painReported?: boolean }): SaveOutcome | null;
   addManual(input: Omit<SessionResultInput, "id" | "userId">): SaveOutcome;
   restCheckIn(date: string): void;
+  /** Ajoute de l'XP déjà calculée (quêtes) ; idempotent par identifiant d'événement. */
+  awardXp(events: XpEvent[]): void;
   /** Écritures en attente d'envoi au serveur (outbox). */
   pendingSync: number;
   online: boolean;
@@ -170,9 +172,17 @@ export function JournalProvider({ userId, children }: { userId: string; children
     [journal, persistJournal, enqueue],
   );
 
+  const awardXp = useCallback(
+    (events: XpEvent[]) => {
+      if (!events.length) return;
+      persistJournal({ ...journal, game: addEvents(journal.game, events) });
+    },
+    [journal, persistJournal],
+  );
+
   const api = useMemo(
-    () => ({ journal, live, startLive, dispatch, discardLive, finishLive, addManual, restCheckIn, pendingSync, online }),
-    [journal, live, startLive, dispatch, discardLive, finishLive, addManual, restCheckIn, pendingSync, online],
+    () => ({ journal, live, startLive, dispatch, discardLive, finishLive, addManual, restCheckIn, awardXp, pendingSync, online }),
+    [journal, live, startLive, dispatch, discardLive, finishLive, addManual, restCheckIn, awardXp, pendingSync, online],
   );
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }
