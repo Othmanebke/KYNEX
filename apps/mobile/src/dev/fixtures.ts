@@ -1,3 +1,7 @@
+import { BODY_REGIONS, ENVIRONMENTS, GOALS, listDisciplines } from "@kynex/core";
+import { EMPTY_DRAFT, type ProfileDraft } from "@/features/onboarding/draft";
+import { EQUIPMENT_LABEL } from "@/ui/labels";
+
 /**
  * Jeux de données de développement (break-ui). Jamais utilisés hors __DEV__.
  * Le « pire cas » est réaliste : un vrai format d'e-mail long, un mot de passe
@@ -27,3 +31,32 @@ export function readMode(v: string | string[] | undefined): DataMode | null {
   const s = Array.isArray(v) ? v[0] : v;
   return s === "demo" || s === "pire" || s === "vide" ? s : null;
 }
+
+export const PROFILE_FIXTURES: Record<DataMode, ProfileDraft> = {
+  demo: {
+    disciplines: [
+      { disciplineId: "strength_training", level: "intermediate", priority: 1 },
+      { disciplineId: "running", level: "beginner", priority: 2 },
+      { disciplineId: "mobility", level: "beginner", priority: 3 },
+    ],
+    goals: ["muscle_gain", "cardio_endurance"],
+    environments: ["gym", "outdoor"],
+    equipment: ["barbell", "dumbbells", "bench", "squat_rack"],
+    availability: { mon: 60, tue: 45, thu: 60, sat: 90 },
+    preferredRestDays: ["sun"],
+    lowImpact: false,
+    painRegions: [],
+  },
+  // Tout coché, valeurs maximales du schéma (durée 240, 6 séances), 6 jours sur 7 en repos.
+  pire: {
+    disciplines: listDisciplines().map((d, i) => ({ disciplineId: d.id, level: "advanced", priority: (Math.min(3, i + 1) as 1 | 2 | 3), sessionsPerWeek: i === 0 ? 6 : undefined })),
+    goals: [...GOALS],
+    environments: [...ENVIRONMENTS],
+    equipment: Object.keys(EQUIPMENT_LABEL) as ProfileDraft["equipment"],
+    availability: { mon: 240, tue: 240, wed: 240, thu: 240, fri: 240, sat: 240, sun: 10 },
+    preferredRestDays: ["mon", "tue", "wed", "thu", "fri", "sat"],
+    lowImpact: true,
+    painRegions: [...BODY_REGIONS],
+  },
+  vide: EMPTY_DRAFT,
+};

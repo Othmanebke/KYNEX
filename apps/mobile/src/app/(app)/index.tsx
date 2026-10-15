@@ -1,57 +1,83 @@
 import { Platform, StyleSheet, View } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
+import { getDiscipline } from "@kynex/core";
 import { useAuth } from "@/data/auth";
-import { DataToggle } from "@/dev/DataToggle";
-import { readMode, USER_FIXTURES } from "@/dev/fixtures";
+import { useProfile } from "@/data/profile";
 import { Button } from "@/ui/Button";
+import { COVERAGE } from "@/ui/coverage";
+import { DAY_LABEL, formatMinutes, LEVEL_LABEL } from "@/ui/labels";
 import { Screen } from "@/ui/Screen";
 import { Text } from "@/ui/Text";
-import { colors, space } from "@/ui/tokens";
+import { colors, disciplineColors, radius, space } from "@/ui/tokens";
 
-/** Écran provisoire : sera remplacé par la création du profil (étape 2). */
+/** Écran provisoire : le calendrier de la semaine (écran 3) le remplacera. */
 export default function Home() {
   const { state, signOut } = useAuth();
-  const devMode = readMode(useLocalSearchParams<{ data?: string }>().data);
-  const real = state.status === "signedIn" ? state.user : null;
-  const user = devMode ? { ...USER_FIXTURES[devMode], mode: "cloud" as const } : real;
+  const { profile } = useProfile();
+  const user = state.status === "signedIn" ? state.user : null;
+  if (!profile) return null;
   return (
-    <>
-      <Screen>
-        <View style={styles.body}>
-          <Text variant="display" accessibilityRole="header">
-            Tu es connecté
-          </Text>
-          {user?.email ? (
-            <View style={styles.block}>
-              <Text variant="label" color={colors.muted}>
-                {user.mode === "cloud" ? "Compte en ligne" : "Compte sur cet appareil"}
+    <Screen maxWidth={640}>
+      <View style={styles.top}>
+        <Text variant="title">KYNEX</Text>
+        <Text variant="monoSmall" color={colors.muted} numberOfLines={1} style={[styles.who, styles.breakAnywhere]}>
+          {user?.email ?? "SANS COMPTE"}
+        </Text>
+      </View>
+
+      <View style={styles.head}>
+        <Text variant="display" accessibilityRole="header">
+          Profil prêt
+        </Text>
+        <Text variant="body" color={colors.muted}>
+          Prochaine étape : le calendrier de ta semaine, généré à partir de ce profil.
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text variant="label" color={colors.muted}>
+          Disciplines
+        </Text>
+        {profile.disciplines.map((d) => {
+          const def = getDiscipline(d.disciplineId);
+          return (
+            <View key={d.disciplineId} style={styles.row}>
+              <View style={[styles.dot, { backgroundColor: disciplineColors[def.family] }]} />
+              <Text variant="bodyStrong" style={styles.flex}>
+                {def.name}
               </Text>
-              <Text variant="bodyStrong" style={styles.breakAnywhere}>
-                {user.email}
+              <Text variant="small" color={colors.muted}>
+                {LEVEL_LABEL[d.level]}
+              </Text>
+              <Text variant="label" color={COVERAGE[def.coverage].color}>
+                {COVERAGE[def.coverage].label}
               </Text>
             </View>
-          ) : (
-            <Text variant="body" color={colors.muted}>
-              Sans compte : tes données restent sur cet appareil.
-            </Text>
-          )}
-          <Text variant="monoSmall" color={colors.faint} selectable style={styles.breakAnywhere}>
-            ID {user?.id}
-          </Text>
-          <Text variant="small" color={colors.muted}>
-            Prochaine étape : création de ton profil d'entraînement.
-          </Text>
-        </View>
-        <Button kind="secondary" label="Se déconnecter" onPress={() => void signOut()} />
-      </Screen>
-      <DataToggle />
-    </>
+          );
+        })}
+        <Text variant="label" color={colors.muted} style={styles.mt}>
+          Disponibilités
+        </Text>
+        <Text variant="mono">{profile.availability.map((a) => `${DAY_LABEL[a.day].short} ${formatMinutes(a.maxMinutes)}`).join(" · ")}</Text>
+      </View>
+
+      <View style={styles.actions}>
+        <Button kind="secondary" label="Modifier mon profil" onPress={() => router.push("/creation-profil")} />
+        <Button kind="link" label="Se déconnecter" onPress={() => void signOut()} />
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  body: { gap: space.md, flexGrow: 1 },
-  block: { gap: space.xs },
-  // Web : coupe un e-mail sans espace au lieu de déborder. Natif : RN coupe déjà les mots trop longs.
-  breakAnywhere: Platform.select({ web: { wordBreak: "break-word" } as object, default: {} }),
+  top: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: space.md },
+  who: { flexShrink: 1, textAlign: "right" },
+  breakAnywhere: Platform.select({ web: { wordBreak: "break-all" } as object, default: {} }),
+  head: { gap: space.sm },
+  card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: space.lg, gap: space.sm },
+  row: { flexDirection: "row", alignItems: "center", gap: space.sm, flexWrap: "wrap", minHeight: 32 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  flex: { flex: 1, minWidth: 140 },
+  mt: { marginTop: space.md },
+  actions: { gap: space.sm },
 });
