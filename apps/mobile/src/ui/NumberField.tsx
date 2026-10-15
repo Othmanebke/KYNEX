@@ -3,7 +3,7 @@ import { StyleSheet, TextInput, View } from "react-native";
 import { Text } from "./Text";
 import { colors, fonts, radius, space } from "./tokens";
 
-/** Champ numérique : vide = non saisi (jamais 0 par défaut). */
+/** Champ numérique : vide (« — ») = non saisi, jamais 0 par défaut. */
 export function NumberField({ label, unit, value, onChange, decimal }: { label: string; unit: string; value?: number; onChange: (v: number | undefined) => void; decimal?: boolean }) {
   const [text, setText] = useState(value === undefined ? "" : String(value));
   return (
@@ -22,7 +22,8 @@ export function NumberField({ label, unit, value, onChange, decimal }: { label: 
           }}
           keyboardType={decimal ? "decimal-pad" : "number-pad"}
           inputMode={decimal ? "decimal" : "numeric"}
-          placeholder="non saisi"
+          placeholder="—"
+          accessibilityHint="Laisse vide si tu ne veux pas le saisir : rien ne sera inventé"
           placeholderTextColor={colors.faint}
           accessibilityLabel={`${label} en ${unit}`}
           selectionColor={colors.accent}

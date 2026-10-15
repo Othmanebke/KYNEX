@@ -38,7 +38,7 @@ const LEDE: Record<(typeof STEPS)[number]["id"], string> = {
 };
 
 export default function CreationProfil() {
-  const { state } = useAuth();
+  const { state, signOut } = useAuth();
   const { draft: saved, saveDraft, saveProfile, profile } = useProfile();
   const { width } = useWindowDimensions();
   const wide = width >= 960;
@@ -153,7 +153,10 @@ export default function CreationProfil() {
           </Text>
           {profile ? (
             <Button kind="link" label="Annuler" hint="Garde ton profil actuel" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />
-          ) : null}
+          ) : (
+            // Avant le premier profil, l'onglet Profil n'existe pas encore : on peut quand même sortir.
+            <Button kind="link" label={state.status === "signedIn" && state.user.mode === "demo" ? "Quitter la démo" : "Se déconnecter"} hint="Ton brouillon est conservé" onPress={() => void signOut()} />
+          )}
         </View>
         <Progress value={(step + 1) / STEPS.length} />
 
