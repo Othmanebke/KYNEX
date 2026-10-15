@@ -1,6 +1,6 @@
 import "./local-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { downgradeSession, moveSession, planWeek, removeSession, type Suggestion, type TrainingProfile, type Weekday, type WeeklySchedule } from "@kynex/core";
+import { applyWellnessSignal, downgradeSession, moveSession, planWeek, removeSession, type Suggestion, type WellnessSignal, type TrainingProfile, type Weekday, type WeeklySchedule } from "@kynex/core";
 import { findSession, isoDate, mondayOf, parseIsoDate, profileFingerprint, weekIndexBetween } from "@/features/week/week";
 import { DAY_LABEL } from "@/ui/labels";
 
@@ -21,6 +21,8 @@ export interface WeekApi {
   downgrade(sessionId: string): void;
   remove(sessionId: string): void;
   applySuggestion(s: Suggestion): void;
+  /** Signalement fatigue / douleur : remplace les séances concernées, sans pénalité. */
+  applyWellness(signal: WellnessSignal): void;
   undo(): void;
   /** Repart de la semaine générée (annule toutes les modifications). */
   reset(): void;
@@ -100,6 +102,15 @@ export function WeekProvider({ userId, profile, now, children }: { userId: strin
     [move, downgrade, remove],
   );
 
+  const applyWellness = useCallback(
+    (signal: WellnessSignal) =>
+      commit(
+        (s) => applyWellnessSignal(s, signal, profile),
+        () => `${signal.kind === "pain" ? "Douleur" : "Fatigue"} prise en compte : ${DAY_LABEL[signal.day].long.toLowerCase()} adapté`,
+      ),
+    [commit, profile],
+  );
+
   const undo = useCallback(() => {
     setState((cur) => {
       if (!cur?.previous) return cur;
@@ -132,12 +143,13 @@ export function WeekProvider({ userId, profile, now, children }: { userId: strin
             downgrade,
             remove,
             applySuggestion,
+            applyWellness,
             undo,
             reset,
             dismissNotice,
           }
         : null,
-    [state, monday, weekIndex, move, downgrade, remove, applySuggestion, undo, reset, dismissNotice],
+    [state, monday, weekIndex, move, downgrade, remove, applySuggestion, applyWellness, undo, reset, dismissNotice],
   );
   if (!api) return null;
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;

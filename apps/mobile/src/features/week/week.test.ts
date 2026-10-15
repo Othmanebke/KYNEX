@@ -93,3 +93,9 @@ describe("notes du plan", () => {
     ]);
   });
 });
+
+describe("zones du corps", () => {
+  it("traduit les zones signalées dans les messages", () => {
+    expect(frenchDays("Douleur modérée signalée (knee) : « Course » remplacée.")).toBe("Douleur modérée signalée (genou) : « Course » remplacée.");
+  });
+});

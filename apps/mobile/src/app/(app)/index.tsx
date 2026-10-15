@@ -4,7 +4,10 @@ import { router } from "expo-router";
 import { getDiscipline, getGenerator, listDisciplines, WEEKDAYS, type ScheduledSession, type Weekday } from "@kynex/core";
 import { useAuth } from "@/data/auth";
 import { useProfile } from "@/data/profile";
+import { useJournal } from "@/data/journal";
+import { completedPlanned } from "@/data/journal-core";
 import { useWeek } from "@/data/week";
+import { WellnessSheet } from "@/features/wellness/WellnessSheet";
 import { ConflictCard, DayBlock, DayStrip, Gauges, UndoBar } from "@/features/week/components";
 import { SessionSheet } from "@/features/week/SessionSheet";
 import { dateOfDay, findSession, isoDate, mondayOf, readableNotes, sortConflicts, todayWeekday, weekGauges, weekRangeLabel } from "@/features/week/week";
@@ -26,6 +29,8 @@ export default function Semaine() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [account, setAccount] = useState(false);
   const [allNotes, setAllNotes] = useState(false);
+  const [wellness, setWellness] = useState(false);
+  const j = useJournal();
   const scrollRef = useRef<ScrollView | null>(null);
   const dayY = useRef<Partial<Record<Weekday, number>>>({});
   const daysTop = useRef(0);
@@ -36,6 +41,7 @@ export default function Semaine() {
   const dates = useMemo(() => Object.fromEntries(WEEKDAYS.map((d) => [d, dateOfDay(monday, d)])) as Record<Weekday, Date>, [monday]);
   const conflicts = useMemo(() => sortConflicts(schedule.conflicts), [schedule]);
   const gauges = useMemo(() => (profile ? weekGauges(schedule, profile) : null), [schedule, profile]);
+  const doneIds = useMemo(() => completedPlanned(schedule, j.journal.results), [schedule, j.journal.results]);
   if (!profile || !gauges) return null;
 
   const untracked = profile.disciplines.filter((d) => !["full", "beta"].includes(getDiscipline(d.disciplineId).coverage));
@@ -64,7 +70,7 @@ export default function Semaine() {
             dayY.current[d.day] = e.nativeEvent.layout.y;
           }}
         >
-          <DayBlock d={d} restPreferred={restDays.includes(d.day)} date={dates[d.day]} isToday={d.day === today} conflicts={schedule.conflicts} onSession={(s) => router.push({ pathname: "/seance/[id]", params: { id: s.id } })} onOptions={(s) => setOpenId(s.id)} compact={columns} />
+          <DayBlock d={d} doneIds={doneIds} restPreferred={restDays.includes(d.day)} date={dates[d.day]} isToday={d.day === today} conflicts={schedule.conflicts} onSession={(s) => router.push({ pathname: "/seance/[id]", params: { id: s.id } })} onOptions={(s) => setOpenId(s.id)} compact={columns} />
         </View>
       ))}
     </View>
@@ -95,6 +101,13 @@ export default function Semaine() {
             {gauges.sessions} séance{gauges.sessions > 1 ? "s" : ""} ·{" "}
             {conflicts.length === 0 ? "aucun conflit" : `${conflicts.length} conflit${conflicts.length > 1 ? "s" : ""}${errors ? ` dont ${errors} à corriger` : ""}`}
           </Text>
+        </View>
+
+        <View style={styles.heroActions}>
+          {j.live && (j.live.status === "running" || j.live.status === "paused") && j.live.plannedSessionId ? (
+            <Button label={`Reprendre : ${j.live.plan.title}`} arrow onPress={() => router.push({ pathname: "/live/[id]", params: { id: j.live!.plannedSessionId! } })} />
+          ) : null}
+          <Button kind="secondary" label="Fatigue ou douleur" hint="Adapte la semaine sans pénalité" onPress={() => setWellness(true)} />
         </View>
 
         {week.regenerated ? (
@@ -186,6 +199,13 @@ export default function Semaine() {
         onRemove={week.remove}
       />
 
+      <WellnessSheet
+        visible={wellness}
+        onClose={() => setWellness(false)}
+        defaultDay={today ?? "mon"}
+        onApply={(signal) => week.applyWellness(signal)}
+      />
+
       <Sheet visible={account} onClose={() => setAccount(false)} title="Compte">
         <Text variant="small" color={colors.muted}>
           {state.status === "signedIn" ? (state.user.email ? `Connecté : ${state.user.email}` : "Sans compte : données sur cet appareil.") : ""}
@@ -221,6 +241,7 @@ const styles = StyleSheet.create({
   noShrink: { flexShrink: 0 },
   accountSlot: { flexShrink: 1, minWidth: 0 },
   hero: { gap: space.xs },
+  heroActions: { gap: space.sm, flexDirection: "row", flexWrap: "wrap" },
   info: { backgroundColor: colors.surface, borderRadius: radius.md, padding: space.md, borderWidth: 1, borderColor: colors.line },
   overview: { gap: space.lg },
   overviewWide: { flexDirection: "row", alignItems: "flex-start", gap: space.xl },

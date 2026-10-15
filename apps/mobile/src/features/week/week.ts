@@ -4,6 +4,7 @@ import {
   MAX_HIGH_PER_WEEK,
   WEEKDAYS,
   WEEKLY_CNS_BUDGET,
+  type BodyRegion,
   type Conflict,
   type Intensity,
   type Level,
@@ -13,7 +14,7 @@ import {
   type Weekday,
   type WeeklySchedule,
 } from "@kynex/core";
-import { DAY_LABEL } from "@/ui/labels";
+import { DAY_LABEL, REGION_LABEL } from "@/ui/labels";
 
 /** Logique pure de l'écran Semaine : dates, jauges, textes. Testée sans React. */
 
@@ -88,7 +89,12 @@ export function weekGauges(s: WeeklySchedule, p: TrainingProfile): WeekGauges {
 
 /** Remplace les codes de jour du socle (« (thu → fri) ») par des noms français. */
 export function frenchDays(message: string): string {
-  return message.replace(/\b(mon|tue|wed|thu|fri|sat|sun)\b/g, (d) => DAY_LABEL[d as Weekday].long.toLowerCase());
+  return frenchRegions(message.replace(/\b(mon|tue|wed|thu|fri|sat|sun)\b/g, (d) => DAY_LABEL[d as Weekday].long.toLowerCase()));
+}
+
+/** Remplace les codes de zone du corps du socle (« (knee) ») par leur nom français. */
+export function frenchRegions(message: string): string {
+  return message.replace(/\((shoulder|elbow|wrist|lower_back|hip|knee|ankle|neck)\)/g, (_, r: BodyRegion) => `(${REGION_LABEL[r].toLowerCase()})`);
 }
 
 export const INTENSITY_LABEL: Record<Intensity, string> = {
@@ -140,7 +146,7 @@ export function readableNotes(notes: string[], variantLabel: (disciplineName: st
   return notes
     .filter((n) => !UNPROGRAMMED_NOTE.test(n))
     .map((n) =>
-      n
+      frenchRegions(n)
         .replace(/\bvos\b/g, "tes")
         .replace(/\bvotre\b/g, "ta")
         .replace(/\b(\d+) séance\(s\)/g, (_, k: string) => `${k} séance${Number(k) > 1 ? "s" : ""}`)

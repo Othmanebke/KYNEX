@@ -83,7 +83,7 @@ export function DayStrip({ days, today, dates, onPick, restDays }: { days: DayPl
 }
 
 /* ───────── Carte de séance ───────── */
-export function SessionCard({ s, conflicts, onPress, onOptions }: { s: ScheduledSession; conflicts: Conflict[]; onPress: () => void; onOptions: () => void }) {
+export function SessionCard({ s, conflicts, onPress, onOptions, done }: { s: ScheduledSession; conflicts: Conflict[]; onPress: () => void; onOptions: () => void; done?: boolean }) {
   const d = getDiscipline(s.disciplineId);
   const mine = conflictsOf(conflicts, s.id);
   const worst = mine.some((c) => c.severity === "error") ? "error" : mine.length ? "warning" : null;
@@ -110,6 +110,7 @@ export function SessionCard({ s, conflicts, onPress, onOptions }: { s: Scheduled
           <Text variant="monoSmall" color={colors.muted}>
             {formatMinutes(s.plan.estimatedMinutes).toUpperCase()} · {INTENSITY_LABEL[s.plan.intensity].toUpperCase()}
           </Text>
+          {done ? <Tag label="Faite" color={colors.accent} /> : null}
           {s.addOn ? <Tag label="Complément" color={colors.muted} /> : null}
           {d.coverage === "beta" ? <Tag label={COVERAGE.beta.label} color={COVERAGE.beta.color} /> : null}
           {s.substitution ? <Tag label="Remplacée" color={colors.warning} /> : null}
@@ -156,7 +157,9 @@ export function DayBlock({
   onOptions,
   compact,
   restPreferred,
+  doneIds,
 }: {
+  doneIds: Set<string>;
   onOptions: (s: ScheduledSession) => void;
   restPreferred: boolean;
   d: DayPlan;
@@ -183,7 +186,7 @@ export function DayBlock({
       {d.sessions.length ? (
         <View style={styles.sessions}>
           {d.sessions.map((s) => (
-            <SessionCard key={s.id} s={s} conflicts={conflicts} onPress={() => onSession(s)} onOptions={() => onOptions(s)} />
+            <SessionCard key={s.id} s={s} conflicts={conflicts} done={doneIds.has(s.id)} onPress={() => onSession(s)} onOptions={() => onOptions(s)} />
           ))}
         </View>
       ) : (

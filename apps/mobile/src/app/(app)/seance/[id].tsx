@@ -5,6 +5,7 @@ import { Image } from "expo-image";
 import { getDiscipline, getGenerator, type TrainingLoad } from "@kynex/core";
 import { exerciseImages } from "@/data/exercise-media";
 import { useProfile } from "@/data/profile";
+import { useJournal } from "@/data/journal";
 import { useWeek } from "@/data/week";
 import { describeBlock, type BlockView } from "@/features/session/blocks";
 import { ExerciseSheet } from "@/features/session/ExerciseSheet";
@@ -120,6 +121,7 @@ export default function SeanceDetail() {
   const wide = width >= 1000;
   const [exerciseId, setExerciseId] = useState<string | null>(null);
   const [actions, setActions] = useState(false);
+  const j = useJournal();
   const session = id ? findSession(week.schedule, id) : undefined;
   const back = () => (router.canGoBack() ? router.back() : router.replace("/"));
 
@@ -140,6 +142,8 @@ export default function SeanceDetail() {
   const date = dateOfDay(week.monday, session.day);
   const views = session.plan.blocks.map(describeBlock);
   const mine = conflictsOf(week.schedule.conflicts, session.id);
+  const done = j.journal.results.some((r) => r.plannedSessionId === session.id && r.status !== "skipped");
+  const resuming = j.live?.plannedSessionId === session.id && (j.live.status === "running" || j.live.status === "paused");
   // « focus » du socle = identifiant de variante (« upper ») : on affiche son libellé, ou rien.
   const focus = session.plan.focus ? (getGenerator(d.id)?.variants[session.plan.focus] ?? (/^[a-z0-9_]+$/.test(session.plan.focus) ? null : session.plan.focus)) : null;
   const showFocus = focus && !session.plan.title.toLowerCase().includes(focus.toLowerCase());
@@ -203,6 +207,19 @@ export default function SeanceDetail() {
           ) : null}
         </View>
 
+        {done ? (
+          <View style={styles.doneRow}>
+            <Icon name="check-circle" size={18} color={colors.accent} />
+            <Text variant="bodyStrong">Séance réalisée cette semaine</Text>
+          </View>
+        ) : (
+          <Button
+            label={resuming ? "Reprendre la séance" : "Commencer la séance"}
+            arrow
+            onPress={() => router.push({ pathname: "/live/[id]", params: { id: session.id } })}
+          />
+        )}
+
         <View style={[styles.layout, wide && styles.layoutWide]}>
           <View style={[styles.blocks, wide && styles.flex2]}>
             {views.map((v, i) => (
@@ -248,6 +265,7 @@ const styles = StyleSheet.create({
   top: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   back: { flexDirection: "row", alignItems: "center", gap: space.xs, alignSelf: "flex-start" },
   head: { gap: space.sm },
+  doneRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   meta: { flexDirection: "row", alignItems: "center", gap: space.sm, flexWrap: "wrap" },
   dot: { width: 10, height: 10, borderRadius: 5 },
   layout: { gap: space.xl },
